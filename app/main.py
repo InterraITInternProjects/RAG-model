@@ -288,7 +288,7 @@ async def query_documents(
                     chunk_id=chunk.chunk_id,
                     doc_id=chunk.doc_id,
                     chunk_idx=chunk.chunk_idx,
-                    chunk_content=chunk.chunk_content
+                    chunk_content=chunk.chunk_content,
                     similarity_score=score_map[key]
                 )   
                 chunks.append(chunk_response)
