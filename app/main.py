@@ -1,11 +1,9 @@
-# backend/app/main.py
-
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import tuple_  # Add this import at the top with other imports
+from sqlalchemy import tuple_ 
 from datetime import timedelta
 from typing import List, Optional
 import os
