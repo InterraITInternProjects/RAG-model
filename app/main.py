@@ -277,7 +277,7 @@ async def query_documents(
             db.commit()
             return QueryResponse(chunks=[], total_chunks=0)
         
-        chunk_keys = [key for key, _ in results]  # key = (chunk_id, doc_id)
+        chunk_keys = [key for key, _ in results]  
         chunks_data = db.query(Chunk).filter(
             tuple_(Chunk.chunk_id, Chunk.doc_id).in_(chunk_keys)
         ).all()
@@ -291,7 +291,8 @@ async def query_documents(
                     doc_id=chunk.doc_id,
                     chunk_idx=chunk.chunk_idx,
                     chunk_content=chunk.chunk_content
-                    similarity_score=score_map[key])   
+                    similarity_score=score_map[key]
+                )   
                 chunks.append(chunk_response)
         chunks.sort(key=lambda x: x.similarity_score, reverse=True)
 
