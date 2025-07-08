@@ -11,7 +11,6 @@ class UserCreate(BaseModel):
 
     @field_validator('email')
     def validate_email(cls, v):
-        # Simple email validation regex
         email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if not re.match(email_pattern, v):
             raise ValueError('Invalid email format')
@@ -49,7 +48,7 @@ class User(BaseModel):
     id: int
     username: str
     email: str
-    created_at: datetime
+    user_created_at: datetime
     
     class Config:
         from_attributes = True
@@ -58,7 +57,7 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: str
-    created_at: datetime
+    response_created_at: datetime
     
     class Config:
         from_attributes = True
@@ -87,7 +86,7 @@ class DocumentUpload(BaseModel):
 class DocumentResponse(BaseModel):
     doc_id: int  
     doc_filename: str 
-    created_at: datetime
+    doc_upload_time: datetime
     chunk_count: int
     user_id: int
     doc_size: int
@@ -111,7 +110,7 @@ class QueryRequest(BaseModel):
 
 class QueryResponse(BaseModel):
     answer: str
-    sources: List[Dict[str, Any]]  # Source chunks with metadata
+    sources: List[Dict[str, Any]]  
     confidence_score: Optional[float] = None
     processing_time: Optional[float] = None
 
@@ -135,7 +134,7 @@ class DocumentChunkResponse(BaseModel):
         from_attributes = True
 
 class QueryResponse(BaseModel):
-    chunks: List[DocumentChunkResponse]  # Changed from answer/sources to chunks
+    chunks: List[DocumentChunkResponse]  
     total_chunks: int
 
 class ErrorResponse(BaseModel):
@@ -143,7 +142,6 @@ class ErrorResponse(BaseModel):
     error_code: Optional[str] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-# Additional models for Query history
 class QueryCreate(BaseModel):
     question: str
 

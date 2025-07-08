@@ -334,12 +334,16 @@ async def get_documents(
         # Get documents with pagination
         documents = db.query(Document).filter(
             Document.user_id == current_user.user_id
-        ).order_by(Document.created_at.desc()).offset(offset).limit(page_size).all()
+        ).order_by(Document.doc_upload_time.desc()).offset(offset).limit(page_size).all()
+
+        # Extract document IDs
+        document_ids = [doc.doc_id for doc in documents]
         
         # Get total count
         total_count = db.query(Document).filter(Document.user_id == current_user.user_id).count()
         
         return {
+            "documents_id": document_ids,
             "documents": documents,
             "total_count": total_count,
             "page": page,
@@ -427,7 +431,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
         "id": current_user.user_id,
         "username": current_user.user_name,
         "email": current_user.user_email,
-        "created_at": getattr(current_user, 'created_at', None)
+        "created_at": getattr(current_user, 'user_created_at', None)
     }
 
 @app.get("/health")

@@ -1,6 +1,6 @@
 # backend/app/database.py
 
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, Float, ForeignKey, PrimaryKeyConstraint
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, Float, ForeignKey, PrimaryKeyConstraint, ForeignKeyConstraint
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from datetime import datetime
 import os
@@ -59,7 +59,7 @@ class QuestionsLogs(Base):
     ans_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     __table_args__ = (
-        ForeignKey(['chunk_id', 'chunk_doc_id'], ['chunks.chunk_id', 'chunks.doc_id']),
+        ForeignKeyConstraint(['chunk_id', 'chunk_doc_id'], ['chunks.chunk_id', 'chunks.doc_id']),
     )
     # Relationships
     user = relationship("User", back_populates="questions_logs")

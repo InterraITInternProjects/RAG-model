@@ -8,19 +8,17 @@ from typing import List, Tuple
 class VectorStore:
     def __init__(self, dimension: int = 384):
         self.dimension = dimension
-        self.index = faiss.IndexFlatIP(dimension)  # Inner product for cosine similarity
+        self.index = faiss.IndexFlatIP(dimension) 
         self.model = SentenceTransformer('all-MiniLM-L6-v2')
         self.chunk_ids = []
         self.index_file = "faiss_index.bin"
         self.metadata_file = "chunk_metadata.pkl"
         
-        # Load existing index if available
         self.load_index()
     
     def encode_text(self, text: str) -> np.ndarray:
         """Encode text to vector using sentence transformer"""
         embedding = self.model.encode([text])
-        # Normalize for cosine similarity
         embedding = embedding / np.linalg.norm(embedding, axis=1, keepdims=True)
         return embedding.astype('float32')
     
@@ -36,6 +34,37 @@ class VectorStore:
             self.index.add(embeddings_array)
             self.chunk_ids.extend(chunk_ids)
             self.save_index()
+
+    def delete_chunks(self, chunk_ids_to_delete: List[int]):
+        """Delete chunks by chunk IDs - rebuilds the index without deleted chunks"""
+        if not chunk_ids_to_delete:
+            return
+        
+        indices_to_keep = []
+        new_chunk_ids = []
+        
+        for i, chunk_id in enumerate(self.chunk_ids):
+            if chunk_id not in chunk_ids_to_delete:
+                indices_to_keep.append(i)
+                new_chunk_ids.append(chunk_id)
+        
+        if not indices_to_keep:
+            self.index = faiss.IndexFlatIP(self.dimension)
+            self.chunk_ids = []
+        else:
+            vectors_to_keep = []
+            for i in indices_to_keep:
+                vector = self.index.reconstruct(i)
+                vectors_to_keep.append(vector)
+            
+            self.index = faiss.IndexFlatIP(self.dimension)
+            if vectors_to_keep:
+                vectors_array = np.array(vectors_to_keep)
+                self.index.add(vectors_array)
+            
+            self.chunk_ids = new_chunk_ids
+        
+        self.save_index()
     
     def search(self, query: str, threshold: float = 0.5, k: int = 5) -> List[Tuple[int, float]]:
         """Search for similar chunks"""
@@ -47,7 +76,7 @@ class VectorStore:
         
         results = []
         for i, (score, idx) in enumerate(zip(scores[0], indices[0])):
-            if score >= threshold:  # Cosine similarity threshold
+            if score >= threshold:  
                 chunk_id = self.chunk_ids[idx]
                 results.append((chunk_id, float(score)))
         
@@ -66,7 +95,6 @@ class VectorStore:
             with open(self.metadata_file, 'rb') as f:
                 self.chunk_ids = pickle.load(f)
 
-# Global vector store instance
 vector_store = VectorStore()
 
 
