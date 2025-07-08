@@ -50,3 +50,6 @@ coverage.xml
 docs/_build/
 
 frontend/
+
+.env
+.bin/
