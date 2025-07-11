@@ -1,10 +1,9 @@
-import fitz  # PyMuPDF
+import fitz 
 from typing import List
 import io
 import logging
 
 def extract_text_from_pdf(file_content: bytes) -> str:
-    """Extract text from PDF file using PyMuPDF (fitz) with detailed logging"""
     logger = logging.getLogger(__name__)
     try:
         text = ""
@@ -22,7 +21,6 @@ def extract_text_from_pdf(file_content: bytes) -> str:
         raise ValueError(f"Error extracting text from PDF: {str(e)}")
 
 def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
-    """Split text into overlapping chunks"""
     chunks = []
     start = 0
     while start < len(text):

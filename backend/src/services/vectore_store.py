@@ -79,7 +79,6 @@ class VectorStore:
             if score >= threshold:  
                 chunk_id = self.chunk_ids[idx]
                 results.append((chunk_id, float(score)))
-        
         return results
     
     def save_index(self):

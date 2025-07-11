@@ -1,13 +1,15 @@
 # backend/app/auth.py
 
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Dict, Any
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-from app.database import get_db, User
+from backend.src.schema.users import User
+from backend.src.config.database import get_db
+from .exceptions import AuthenticationError
 import os
 import secrets
 import hashlib
@@ -25,13 +27,11 @@ def generate_salt(length: int = 32) -> str:
 
 def hash_password_with_salt(password: str, salt: str) -> str:
     """Hash password with salt using bcrypt."""
-    # Combine password and salt
     salted_password = f"{password}{salt}"
     return pwd_context.hash(salted_password)
 
 def verify_password_with_salt(plain_password: str, salt: str, hashed_password: str) -> bool:
     """Verify password with salt."""
-    # Combine password and salt
     salted_password = f"{plain_password}{salt}"
     return pwd_context.verify(salted_password, hashed_password)
 
@@ -75,6 +75,15 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+def verify_token(token: str) -> Dict[str, Any]:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise AuthenticationError("Token has expired")
+    except jwt.JWTError:
+        raise AuthenticationError("Invalid token")
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     """Get current user from JWT token."""
@@ -121,7 +130,6 @@ def update_user_password(db: Session, user: User, new_password: str) -> bool:
         db.rollback()
         return False
 
-# Password strength validation
 def validate_password_strength(password: str) -> tuple[bool, str]:
     """
     Validate password strength.

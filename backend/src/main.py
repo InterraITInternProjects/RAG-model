@@ -10,15 +10,19 @@ import os
 import logging
 from dotenv import load_dotenv
 
-from app.database import init_db, get_db, User, Document, Chunk, QuestionsLogs
-from app.models import UserCreate, UserLogin, Token, QueryRequest, QueryResponse, DocumentChunkResponse, DocumentResponse, QueryHistoryResponse
+from src.config.database import init_db, get_db, User, Document, Chunk, QuestionsLogs
+from src.schema.models.users_model  import UserCreate, UserLogin, Token, 
+from src.schema.models.question_logs_model import QueryRequest, QueryResponse, QueryCreate, QueryHistory, QueryHistoryResponse
+from src.schema.models.documents_model import DocumentUpload, DocumentResponse
+from src.schema.models.chunks_model import DocumentChunk, DocumentChunkResponse
+
 from app.auth import (
     authenticate_user, create_access_token, get_current_user, 
     get_password_hash, ACCESS_TOKEN_EXPIRE_MINUTES, create_user,
     validate_password_strength, get_user, get_user_by_email
 )
-from app.vectore_store import vector_store
-from app.utils import extract_text_from_pdf, chunk_text
+from backend.app.services.vectore_store import vector_store
+from backend.app.utils.utils import extract_text_from_pdf, chunk_text
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -187,8 +191,7 @@ async def upload_file(
                 status_code=409,
                 detail="A document with this filename already exists"
             )
-        
-        # Extract text from PDF
+       
         try:
             text = extract_text_from_pdf(content)
             if not text.strip():
