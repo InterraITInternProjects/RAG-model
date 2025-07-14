@@ -11,7 +11,7 @@ import logging
 from dotenv import load_dotenv
 
 from src.config.database import init_db, get_db, User, Document, Chunk, QuestionsLogs
-from src.schema.models.users_model  import UserCreate, UserLogin, Token, 
+from src.schema.models.users_model  import UserCreate, UserLogin, Token
 from src.schema.models.question_logs_model import QueryRequest, QueryResponse, QueryCreate, QueryHistory, QueryHistoryResponse
 from src.schema.models.documents_model import DocumentUpload, DocumentResponse
 from src.schema.models.chunks_model import DocumentChunk, DocumentChunkResponse
@@ -256,19 +256,16 @@ async def query_documents(
     db: Session = Depends(get_db)
 ):
     try:
-        # Validate query
         if not query.question.strip():
             raise HTTPException(status_code=400, detail="Query cannot be empty")
         
         if len(query.question) > 1000:
             raise HTTPException(status_code=400, detail="Query too long (max 1000 characters)")
         
-        # Search in vector store
         results = vector_store.search(query.question, threshold=0.5, k=5)
         
         if not results:
             logger.info(f"No results found for query: {query.question}")
-            # Log the query even if no results found
             query_log = QuestionsLogs(
                 user_id=current_user.user_id,
                 q_text=query.question,

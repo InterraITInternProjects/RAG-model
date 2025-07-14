@@ -101,3 +101,5 @@ class AuthService:
         except Exception as e:
             logger.error(f"Error changing password: {str(e)}")
             raise HTTPException(status_code=500, detail="Password change failed")
+
+auth_service = AuthService()
