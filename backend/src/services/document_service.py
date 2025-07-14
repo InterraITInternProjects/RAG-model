@@ -22,24 +22,20 @@ class DocumentService:
     db: Session = Depends(get_db)
 ):
         try:
-            # Validate file type
             if not any(file.filename.lower().endswith(ext) for ext in ALLOWED_FILE_TYPES):
                 raise HTTPException(
                     status_code=400, 
                     detail=f"Only {', '.join(ALLOWED_FILE_TYPES)} files are supported"
                 )
             
-            # Read file content
             content = await file.read()
             
-            # Validate file size
             if len(content) > MAX_FILE_SIZE:
                 raise HTTPException(
                     status_code=413, 
                     detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB"
                 )
             
-            # Check for duplicate files (by filename and user)
             existing_doc = db.query(Document).filter(
                 Document.user_id == current_user.user_id,
                 Document.doc_filename == file.filename
@@ -59,7 +55,6 @@ class DocumentService:
                 logger.error(f"PDF extraction failed for {file.filename}: {str(e)}")
                 raise HTTPException(status_code=400, detail=f"PDF processing failed: {str(e)}")
             
-            # Create chunks
             chunks = chunk_text(text)
             if not chunks:
                 raise HTTPException(status_code=400, detail="No text chunks could be created from the document")
@@ -67,7 +62,6 @@ class DocumentService:
                 user_id=current_user.user_id,
                 doc_filename=file.filename,
                 doc_size=len(content),
-                #chunk_count=len(chunks)
             )
             db.add(document)
             db.commit()
@@ -81,7 +75,7 @@ class DocumentService:
             chunk_texts = []
             for i, chunk_content in enumerate(chunks):
                 chunk = Chunk(
-                    chunk_id=i,  # composite key: chunk_id per doc
+                    chunk_id=i, 
                     doc_id=document.doc_id,
                     chunk_idx=i,
                     chunk_content=chunk_content
@@ -116,24 +110,19 @@ class DocumentService:
     page_size: int = DEFAULT_PAGE_SIZE
     ):
         try:
-            # Validate pagination parameters
             if page < 1:
                 raise HTTPException(status_code=400, detail="Page must be >= 1")
             if page_size < 1 or page_size > MAX_PAGE_SIZE:
                 raise HTTPException(status_code=400, detail=f"Page size must be between 1 and {MAX_PAGE_SIZE}")
             
-            # Calculate offset
             offset = (page - 1) * page_size
             
-            # Get documents with pagination
             documents = db.query(Document).filter(
                 Document.user_id == current_user.user_id
             ).order_by(Document.doc_upload_time.desc()).offset(offset).limit(page_size).all()
 
-            # Extract document IDs
             document_ids = [doc.doc_id for doc in documents]
             
-            # Get total count
             total_count = db.query(Document).filter(Document.user_id == current_user.user_id).count()
             
             return {
