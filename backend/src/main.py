@@ -16,13 +16,13 @@ from src.schema.models.question_logs_model import QueryRequest, QueryResponse, Q
 from src.schema.models.documents_model import DocumentUpload, DocumentResponse
 from src.schema.models.chunks_model import DocumentChunk, DocumentChunkResponse
 
-from app.auth import (
+from ..src.utils.auth import (
     authenticate_user, create_access_token, get_current_user, 
     get_password_hash, ACCESS_TOKEN_EXPIRE_MINUTES, create_user,
     validate_password_strength, get_user, get_user_by_email
 )
-from backend.app.services.vectore_store import vector_store
-from backend.app.utils.utils import extract_text_from_pdf, chunk_text
+from ..src.services.vector_service import VectorStore
+from backend.src.utils.text_process import extract_text_from_pdf, chunk_text
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -133,7 +133,7 @@ async def change_password(
 ):
     try:
         # Validate current password
-        from app.auth import verify_password
+        from ..src.utils.auth import verify_password
         if not verify_password(current_password, current_user.user_password, current_user.salt):
             raise HTTPException(status_code=400, detail="Current password is incorrect")
         
@@ -143,7 +143,7 @@ async def change_password(
             raise HTTPException(status_code=400, detail=error_message)
         
         # Update password
-        from app.auth import update_user_password
+        from ..src.utils.auth import update_user_password
         if update_user_password(db, current_user, new_password):
             logger.info(f"Password changed for user: {current_user.user_name}")
             return {"message": "Password changed successfully"}
@@ -232,7 +232,7 @@ async def upload_file(
         db.add_all(chunk_objects)
         db.commit()
         chunk_keys = [(chunk.chunk_id, chunk.doc_id) for chunk in chunk_objects]
-        vector_store.add_chunks(chunk_texts, chunk_keys)
+        VectorStore.add_chunks(chunk_texts, chunk_keys)
         logger.info(f"File uploaded successfully: {file.filename} by user {current_user.user_name}")
         return {
             "message": "File uploaded successfully", 
@@ -262,7 +262,7 @@ async def query_documents(
         if len(query.question) > 1000:
             raise HTTPException(status_code=400, detail="Query too long (max 1000 characters)")
         
-        results = vector_store.search(query.question, threshold=0.5, k=5)
+        results = VectorStore.search(query.question, threshold=0.5, k=5)
         
         if not results:
             logger.info(f"No results found for query: {query.question}")
@@ -412,7 +412,7 @@ async def delete_document(
         chunks = db.query(Chunk).filter(Chunk.doc_id == document_id).all()
         chunk_keys = [(chunk.chunk_id, chunk.doc_id) for chunk in chunks]
         if chunk_keys:
-            vector_store.delete_chunks(chunk_keys)
+            VectorStore.delete_chunks(chunk_keys)
         db.query(Chunk).filter(Chunk.doc_id == document_id).delete()
         db.delete(document)
         db.commit()
